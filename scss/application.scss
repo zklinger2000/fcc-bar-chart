@@ -1,0 +1,19 @@
+$black      : #111;
+$white      : #eee;
+$dark-grey  : #424242;
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: $dark-grey;
+  width: 100%;
+}
+.chart rect {
+  fill: steelblue;
+}
+
+.chart text {
+  fill: white;
+  font: 10px sans-serif;
+  text-anchor: end;
+}
