@@ -9,6 +9,7 @@
 
 const { Component, PropTypes } = React;
 
+/*
 class PieChart extends Component {
   render() {
     var {props} = this, {width, height, data} = props;
@@ -27,6 +28,7 @@ class PieChart extends Component {
     </svg>
   }
 }
+*/
 
 class Chart extends Component {
   componentDidMount() {
@@ -39,25 +41,37 @@ class Chart extends Component {
       })
       .then(json => {
         var data = json.data;
-        console.log(data);
+        // console.log(json);
+        // console.log(data);
 
-        var width = 768,
-          height = 400,
+        var width = 900,
+          height =  600,
           barWidth = 2,
           padding = 60;
 
-       function getDate(strDate) {
-         // INPUT format "1947-01-01"
-         var year = strDate.substr(0, 4);
-         var month = strDate.substr(5, 2) - 1; // zero based index
-         var day = strDate.substr(8, 2);
+        function getDate(strDate) {
+          // INPUT format "1947-01-01"
+          var year = strDate.substr(0, 4);
+          var month = strDate.substr(5, 2) - 1; // zero based index
+          var day = strDate.substr(8, 2);
 
-         return new Date(year, month, day);
-       }
+          return new Date(year, month, day);
+        }
+
+
+        var div = d3.select("#app").append("div")
+          .attr("class", "tooltip")
+          .style("opacity", 0);
+
+        var title = d3.select(".bar-chart-title")
+          .text(json.name);
 
         var svg = d3.select(".chart")
           .attr("width", width)
           .attr("height", height);
+
+        var info = d3.select(".bar-chart-info")
+          .text(json.description);
 
         var minDate = getDate(data[0][0]);
         var maxDate = getDate(data[data.length - 1][0]);
@@ -73,7 +87,7 @@ class Chart extends Component {
           .domain([0, d3.max(data, function(d) {
             return d[1];
           })])
-          .range([padding, height - padding / 2]);
+          .range([padding, height]);
 
         var yScaleAxis = d3.scaleLinear()
           .domain([0, d3.max(data, function(d) {
@@ -89,16 +103,33 @@ class Chart extends Component {
           .data(data)
           .enter()
           .append("rect")
-          .attr('width', barWidth)
-          .attr('height', function(d, i) {
-            return yScale(d[1]) - padding / 2;
+          .attr('class', 'bar')
+          .attr('y', function(d, i) {
+            return height - yScale(d[1]) + padding / 2;
           })
           .attr('x', function(d, i) {
             return xScale(i);
           })
-          .attr('y', function(d, i) {
-            return height - yScale(d[1]);
-          });
+          .on("mouseover", function(d) {
+            div.transition()
+              .duration(200)
+              .style("opacity", .9);
+            div.html("<div>$" + d3.format(",.2f")(d[1]) + " Billion</div><div>" + moment(d[0]).format('YYYY - MMMM') + "</div>")
+              .style("left", (d3.event.pageX) + "px")
+              .style("top", (d3.event.pageY - 28) + "px");
+          })
+          .on("mouseout", function(d) {
+            div.transition()
+              .duration(500)
+              .style("opacity", 0);
+          })
+          .transition()
+          .duration(300)
+          .ease(d3.easeLinear)
+          .attr('height', function(d, i) {
+            return yScale(d[1]) - padding;
+          })
+          .attr('width', barWidth);
 
 
         var yAxis = svg.append('g').call(d3.axisLeft(yScaleAxis).ticks(8))
@@ -114,13 +145,17 @@ class Chart extends Component {
 
   render() {
     return (
-      <svg className="chart"></svg>
+      <div className="bar-chart">
+        <h1 className="bar-chart-title"></h1>
+        <svg className="chart"></svg>
+        <p className="bar-chart-info"></p>
+      </div>
     );
   }
 }
 
 Chart.propTypes = {
-  dataset: PropTypes.array.isRequired
+
 };
 
 //============================================================================
@@ -137,8 +172,7 @@ class App extends Component {
   render() {
     return (
       <div className="App">
-        <PieChart width={400} height={400} data={[4,8,15,16,23,42]} />
-        <Chart dataset={[1, 2, 3]} />
+        <Chart />
       </div>
     );
   }
